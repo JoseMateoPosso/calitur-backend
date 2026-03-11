@@ -1,15 +1,29 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // Activamos el "guardián" de validación para toda la aplicación
-  // whitelist: true elimina cualquier dato extra o malicioso que envíen en el JSON
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  
-  await app.listen(3000);
+
+  // Guardia global de validación (DTOs)
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
+
+  //Configuración de Swagger
+  const config = new DocumentBuilder()
+    .setTitle('CaliTur API')
+    .setDescription('Documentación oficial de la API para sitios turísticos de Cali')
+    .setVersion('1.0')
+    .addBearerAuth() // Le decimos que usamos Tokens VIP
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  // La documentación vivirá en la ruta http://localhost:3000/api
+  SwaggerModule.setup('api', app, document);
+
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
