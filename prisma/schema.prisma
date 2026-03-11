@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// ------------------------------
+// ENTIDADES DEL SISTEMA CALITUR 
+// ------------------------------
+
+model User {
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String         @unique
+  passwordHash String
+  language     String         @default("es")
+  createdAt    DateTime       @default(now())
+  
+  // Relaciones
+  reviews      Review[]
+  favorites    FavoriteSpot[]
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  description String?
+  
+  // Relaciones
+  spots       TouristSpot[] 
+}
+
+model TouristSpot {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String
+  latitude    Float?
+  longitude   Float?
+  price       Float?
+  schedule    String?
+  
+  // Relaciones
+  categories  Category[]
+  reviews     Review[]
+  favorites   FavoriteSpot[]
+}
+
+model Review {
+  id          Int         @id @default(autoincrement())
+  text        String
+  rating      Int         // De 1 a 5
+  createdAt   DateTime    @default(now())
+  
+  userId      Int
+  spotId      Int
+  
+  // Llaves Foráneas
+  user        User        @relation(fields: [userId], references: [id])
+  spot        TouristSpot @relation(fields: [spotId], references: [id])
+}
+
+model FavoriteSpot {
+  userId      Int
+  spotId      Int
+  savedAt     DateTime    @default(now())
+  
+  user        User        @relation(fields: [userId], references: [id])
+  spot        TouristSpot @relation(fields: [spotId], references: [id])
+
+  // Llave primaria compuesta
+  @@id([userId, spotId])
+}
