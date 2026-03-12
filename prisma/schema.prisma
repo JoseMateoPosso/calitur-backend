@@ -47,6 +47,7 @@ model TouristSpot {
   longitude   Float?
   price       Float?
   schedule    String?
+  imageUrl    String?
   
   // Relaciones
   categories  Category[]
