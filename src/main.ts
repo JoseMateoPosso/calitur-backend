@@ -6,6 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Habilitar CORS para permitir solicitudes desde el frontend
+  app.enableCors();
+
   // Guardia global de validación (DTOs)
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
@@ -25,5 +28,6 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
+  console.log(`Servidor corriendo en http://localhost:${process.env.PORT ?? 3000}`);
 }
 bootstrap();
