@@ -27,7 +27,7 @@ async function bootstrap() {
   // La documentación vivirá en la ruta http://localhost:3000/api
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Servidor corriendo en http://localhost:${process.env.PORT ?? 3000}`);
+  await app.listen(process.env.PORT ?? 4000);
+  console.log(`Servidor corriendo en http://localhost:${process.env.PORT ?? 4000}`);
 }
 bootstrap();

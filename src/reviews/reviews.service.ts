@@ -8,8 +8,8 @@ export class ReviewsService {
 
     // Método para crear una reseña uniendo el ID del usuario seguro
     async createReview(userId: number, data: CreateReviewDto) {
-        // Verificamos que el usuario no haya hecho una reseña para el mismo sitio antes y que el sitio exista (opcional pero recomendado)
-        const spotExists = await this.prisma.review.findFirst({
+        // Verificamos que el sitio turístico exista
+        const spotExists = await this.prisma.touristSpot.findUnique({
             where: {
                 id: data.spotId,
             },
