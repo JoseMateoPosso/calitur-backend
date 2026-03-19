@@ -27,7 +27,7 @@ export class AuthService {
         }
 
         // Creamos el payload para el JWT (puede contener cualquier información que queramos, pero no debe ser sensible)
-        const payload = { email: user.email, sub: user.id };
+        const payload = { email: user.email, sub: user.id, role: user.role };
 
         // Firmamos el JWT con la clave secreta y lo devolvemos
         const token = this.jwtService.sign(payload);

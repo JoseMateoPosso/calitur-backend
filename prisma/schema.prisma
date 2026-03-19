@@ -9,38 +9,44 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ------------------------------
 // ENTIDADES DEL SISTEMA CALITUR 
 // ------------------------------
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
-  id           Int            @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   name         String
-  email        String         @unique
+  email        String   @unique
   passwordHash String
-  language     String         @default("es")
-  createdAt    DateTime       @default(now())
-  
+  language     String   @default("es")
+  createdAt    DateTime @default(now())
+  role         Role     @default(USER)
+
   // Relaciones
-  reviews      Review[]
-  favorites    FavoriteSpot[]
+  reviews   Review[]
+  favorites FavoriteSpot[]
 }
 
 model Category {
-  id          Int           @id @default(autoincrement())
-  name        String        @unique
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
   description String?
-  
+
   // Relaciones
-  spots       TouristSpot[] 
+  spots TouristSpot[]
 }
 
 model TouristSpot {
-  id          Int            @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
   description String
   latitude    Float?
@@ -48,34 +54,34 @@ model TouristSpot {
   price       Float?
   schedule    String?
   imageUrl    String?
-  
+
   // Relaciones
-  categories  Category[]
-  reviews     Review[]
-  favorites   FavoriteSpot[]
+  categories Category[]
+  reviews    Review[]
+  favorites  FavoriteSpot[]
 }
 
 model Review {
-  id          Int         @id @default(autoincrement())
-  text        String
-  rating      Int         // De 1 a 5
-  createdAt   DateTime    @default(now())
-  
-  userId      Int
-  spotId      Int
-  
+  id        Int      @id @default(autoincrement())
+  text      String
+  rating    Int // De 1 a 5
+  createdAt DateTime @default(now())
+
+  userId Int
+  spotId Int
+
   // Llaves Foráneas
-  user        User        @relation(fields: [userId], references: [id])
-  spot        TouristSpot @relation(fields: [spotId], references: [id])
+  user User        @relation(fields: [userId], references: [id])
+  spot TouristSpot @relation(fields: [spotId], references: [id])
 }
 
 model FavoriteSpot {
-  userId      Int
-  spotId      Int
-  savedAt     DateTime    @default(now())
-  
-  user        User        @relation(fields: [userId], references: [id])
-  spot        TouristSpot @relation(fields: [spotId], references: [id])
+  userId  Int
+  spotId  Int
+  savedAt DateTime @default(now())
+
+  user User        @relation(fields: [userId], references: [id])
+  spot TouristSpot @relation(fields: [spotId], references: [id])
 
   // Llave primaria compuesta
   @@id([userId, spotId])
