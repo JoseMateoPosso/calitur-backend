@@ -7,15 +7,24 @@ import { AuthGuard } from './auth.guard'; // Importamos a nuestro guardia de aut
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    @Post('register')
+    async register(@Body() registerDto: { name: string; email: string; password: string }) {
+        return this.authService.register(
+            registerDto.name,
+            registerDto.email,
+            registerDto.password
+        );
+    }
+
     @Post('login') // Ruta final: http://localhost:3000/auth/login
-    login(@Body() loginDto: LoginDto) {
+    async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto.email, loginDto.password);
     }
 
     // Ruta protegida: Solo accesible con un token válido
     @UseGuards(AuthGuard)
     @Get('profile')
-    getProfile(@Request() request) {
+    async getProfile(@Request() request) {
         // Retornamos el payload que el Guardián incrustó en la petición
         return request.user;
     }
