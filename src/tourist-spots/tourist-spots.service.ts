@@ -70,6 +70,9 @@ export class TouristSpotsService {
     async findOneSpot(id: number) {
         const spot = await this.prisma.touristSpot.findUnique({
             where: { id },
+            include: {
+                categories: true, // Incluimos las categorías para que el Frontend pueda mostrar esa información sin hacer consultas adicionales
+            },
         });
 
         // Si Prisma no encuentra nada, devuelve null. Lanzamos un error 404.
