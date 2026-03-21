@@ -15,22 +15,40 @@ export class TouristSpotsService {
     }
 
     // Método para obtener todos los sitios
-    async findAllSpots(page: number = 1, limit: number = 10, search?: string) {
+    async findAllSpots(page: number = 1, limit: number = 10, search?: string, category?: string) {
         // 1. Matemáticas de paginación
         const skip = (page - 1) * limit;
 
         // Construimos el filtro de búsqueda si el usuario envió texto y mantiene la búsqueda insensible a mayúsculas/minúsculas
-        const whereClause: Prisma.TouristSpotWhereInput = search ? { name: { contains: search, mode: 'insensitive' } } : {};
+        const where: Prisma.TouristSpotWhereInput = {}
+
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        if (category) {
+            where.categories = {
+                some: {
+                    name: { equals: category, mode: 'insensitive' }
+                }
+            };
+        }
 
         // Hacemos ambas consultas en paralelo: una para obtener los datos paginados y otra para contar el total de resultados que coinciden con el filtro (sin paginar)
         const [data, total] = await Promise.all([
             this.prisma.touristSpot.findMany({
-                where: whereClause,
+                where: where,
                 skip: skip,
                 take: limit,
+                include: {
+                    categories: true, // Incluimos las categorías para que el Frontend pueda mostrar esa información sin hacer consultas adicionales
+                },
                 orderBy: { id: 'asc' }, // Los ordenamos por ID para que no salten
             }),
-            this.prisma.touristSpot.count({ where: whereClause }),
+            this.prisma.touristSpot.count({ where: where }),
         ]);
 
         // 4. Calculamos la última página para ayudarle al Frontend

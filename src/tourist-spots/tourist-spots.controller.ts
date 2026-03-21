@@ -20,6 +20,7 @@ export class TouristSpotsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
+    @Query('sort') category?: string,
   ) {
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? parseInt(limit, 10) : 10;
@@ -27,7 +28,7 @@ export class TouristSpotsController {
     if (isNaN(pageNumber) || pageNumber < 1) {
       throw new BadRequestException('El número de página debe ser un entero positivo');
     }
-    return this.touristSpotsService.findAllSpots(pageNumber, limitNumber, search);
+    return this.touristSpotsService.findAllSpots(pageNumber, limitNumber, search, category);
   }
 
   @Get(':id')
