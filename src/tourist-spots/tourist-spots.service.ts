@@ -32,7 +32,7 @@ export class TouristSpotsService {
         if (category) {
             where.categories = {
                 some: {
-                    name: { equals: category, mode: 'insensitive' }
+                    id: Number(category)
                 }
             };
         }
