@@ -38,7 +38,7 @@ export class TouristSpotsService {
         }
 
         // Hacemos ambas consultas en paralelo: una para obtener los datos paginados y otra para contar el total de resultados que coinciden con el filtro (sin paginar)
-        const [data, total] = await Promise.all([
+        const [rawData, total] = await Promise.all([
             this.prisma.touristSpot.findMany({
                 where: where,
                 skip: skip,
@@ -56,7 +56,7 @@ export class TouristSpotsService {
             this.prisma.touristSpot.count({ where: where }),
         ]);
 
-        const dataWithRatings = data.map(spot => {
+        const data = rawData.map(spot => {
             const totalReviews = spot.reviews.length;
             const sumRatings = spot.reviews.reduce((acc, curr) => acc + curr.rating, 0);
             // Si hay reseñas, calculamos el promedio y lo redondeamos a 1 decimal. Si no, es 0.
@@ -73,7 +73,7 @@ export class TouristSpotsService {
 
         // 5. Devolvemos la información estructurada profesionalmente
         return {
-            dataWithRatings,
+            data,
             meta: {
                 total,
                 currentPage: page,
