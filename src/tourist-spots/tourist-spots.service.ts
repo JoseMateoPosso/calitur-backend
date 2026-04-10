@@ -15,7 +15,7 @@ export class TouristSpotsService {
     }
 
     // Método para obtener todos los sitios
-    async findAllSpots(page: number = 1, limit: number = 10, search?: string, category?: string) {
+    async findAllSpots(page: number = 1, limit: number = 10, search?: string, category?: string, userId?: number) {
         // 1. Matemáticas de paginación
         const skip = (page - 1) * limit;
 
@@ -49,7 +49,10 @@ export class TouristSpotsService {
                         select: {
                             rating: true, // Solo necesitamos el rating para calcular el promedio
                         }
-                    }
+                    },
+                    favorites: userId ? {
+                        where: { userId: userId }
+                    } : false,
                 },
                 orderBy: { id: 'asc' }, // Los ordenamos por ID para que no salten
             }),
@@ -63,11 +66,12 @@ export class TouristSpotsService {
             const averageRating = totalReviews > 0 ? Number((sumRatings / totalReviews).toFixed(1)) : 0;
 
             // Removemos el array crudo de reseñas y enviamos solo los datos procesados
-            const { reviews, ...spotWithoutReviews } = spot;
+            const { reviews, favorites, ...spotWithoutReviews } = spot;
             return {
                 ...spotWithoutReviews,
                 rating: averageRating,
-                reviewCount: totalReviews
+                reviewCount: totalReviews,
+                isFavorite: favorites && favorites.length > 0 ? true : false,
             };
         });
 
@@ -84,17 +88,29 @@ export class TouristSpotsService {
     }
 
     // Método para obtener un sitio por su ID
-    async findOneSpot(id: number) {
+    // Método para obtener un sitio por su ID
+    async findOneSpot(id: number, userId?: number) { // 👈 Agregamos userId opcional
         const spot = await this.prisma.touristSpot.findUnique({
             where: { id },
+            include: {
+                categories: true,
+                reviews: true,
+                favorites: userId ? {
+                    where: { userId: userId }
+                } : false,
+            },
         });
 
-        // Si Prisma no encuentra nada, devuelve null. Lanzamos un error 404.
         if (!spot) {
             throw new NotFoundException(`El sitio turístico con ID ${id} no fue encontrado`);
         }
 
-        return spot;
+        const { favorites, ...spotClean } = spot;
+
+        return {
+            ...spotClean,
+            isFavorite: favorites && favorites.length > 0 ? true : false,
+        };
     }
 
     // Método para actualizar un sitio por su ID
