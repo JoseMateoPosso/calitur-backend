@@ -116,4 +116,38 @@ export class TouristSpotsService {
             data: { imageUrl },
         });
     }
+
+    //Método para agregar a favoritos un sitio turístico
+    async toggleFavorite(spotId: number, userId: number) {
+        // Prisma une las llaves compuestas con un guion bajo en las consultas
+        const favoriteIdentifier = {
+            userId_spotId: {
+                userId: userId,
+                spotId: spotId,
+            },
+        };
+
+        // 1. Buscamos si ya existe usando findUnique con la llave compuesta
+        const existingFavorite = await this.prisma.favoriteSpot.findUnique({
+            where: favoriteIdentifier,
+        });
+
+        // 2. Si existe, lo eliminamos
+        if (existingFavorite) {
+            await this.prisma.favoriteSpot.delete({
+                where: favoriteIdentifier,
+            });
+            return { isFavorite: false, message: 'Removido de favoritos' };
+        }
+
+        // 3. Si no existe, lo creamos
+        await this.prisma.favoriteSpot.create({
+            data: {
+                userId: userId,
+                spotId: spotId,
+            },
+        });
+
+        return { isFavorite: true, message: 'Agregado a favoritos' };
+    }
 }

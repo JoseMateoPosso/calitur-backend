@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, BadRequestException, Patch, Delete, UseGuards, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, BadRequestException, Patch, Delete, UseGuards, Query, UseInterceptors, UploadedFile, Request } from '@nestjs/common';
 import { TouristSpotsService } from './tourist-spots.service';
 import { CreateTouristSpotDto } from './dto/create-tourist-spot.dto';
 import { UpdateTouristSpotDto } from './dto/update-tourist-spot.dto';
@@ -88,5 +88,17 @@ export class TouristSpotsController {
       throw new BadRequestException('Asegúrate de enviar una imagen válida');
     }
     return this.touristSpotsService.uploadSpotImage(id, file);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post(':id/favorite')
+  async toggleFavorite(
+    @Request() req, // 👈 Extraemos el request que ya pasó por el Guard
+    @Param('id') spotId: string,
+  ) {
+    // Extraemos el ID del usuario directamente del token JWT de forma segura
+    const userId = req.user.sub; 
+
+    return this.touristSpotsService.toggleFavorite(+spotId, userId);
   }
 }
