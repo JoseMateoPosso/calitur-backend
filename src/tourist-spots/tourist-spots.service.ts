@@ -38,21 +38,38 @@ export class TouristSpotsService {
         }
 
         // Hacemos ambas consultas en paralelo: una para obtener los datos paginados y otra para contar el total de resultados que coinciden con el filtro (sin paginar)
-        const [data, total] = await Promise.all([
+        const [rawData, total] = await Promise.all([
             this.prisma.touristSpot.findMany({
                 where: where,
                 skip: skip,
                 take: limit,
                 include: {
                     categories: true, // Incluimos las categorías para que el Frontend pueda mostrar esa información sin hacer consultas adicionales
+                    reviews: {
+                        select: {
+                            rating: true, // Solo necesitamos el rating para calcular el promedio
+                        }
+                    }
                 },
                 orderBy: { id: 'asc' }, // Los ordenamos por ID para que no salten
             }),
             this.prisma.touristSpot.count({ where: where }),
         ]);
 
-        // 4. Calculamos la última página para ayudarle al Frontend
-        const lastPage = Math.ceil(total / limit);
+        const data = rawData.map(spot => {
+            const totalReviews = spot.reviews.length;
+            const sumRatings = spot.reviews.reduce((acc, curr) => acc + curr.rating, 0);
+            // Si hay reseñas, calculamos el promedio y lo redondeamos a 1 decimal. Si no, es 0.
+            const averageRating = totalReviews > 0 ? Number((sumRatings / totalReviews).toFixed(1)) : 0;
+
+            // Removemos el array crudo de reseñas y enviamos solo los datos procesados
+            const { reviews, ...spotWithoutReviews } = spot;
+            return {
+                ...spotWithoutReviews,
+                rating: averageRating,
+                reviewCount: totalReviews
+            };
+        });
 
         // 5. Devolvemos la información estructurada profesionalmente
         return {
@@ -60,7 +77,7 @@ export class TouristSpotsService {
             meta: {
                 total,
                 currentPage: page,
-                lastPage,
+                lastPage: Math.ceil(total / limit),
                 limit,
             },
         };
