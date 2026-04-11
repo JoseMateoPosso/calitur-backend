@@ -1,22 +1,38 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Query, DefaultValuePipe } from '@nestjs/common'; import { UsersService } from './users.service';
 import { Prisma } from '@prisma/client';
-//import { ApiExcludeController } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
-//@ApiExcludeController() // Excluye este controlador de la documentación de Swagger
-@Controller('users') // La ruta ahora será http://localhost:3000/users
+@Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
-  // Endpoint para registrar un usuario
   @Post()
   createUser(@Body() data: Prisma.UserCreateInput) {
     return this.usersService.createUser(data);
   }
 
-  // Endpoint para listar los usuarios
+  @UseGuards(AuthGuard, AdminGuard)
   @Get()
-  findAllUsers() {
-    return this.usersService.findAllUsers();
+  findAllUsers(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.usersService.findAllUsers(page, limit);
+  }
+
+  @UseGuards(AuthGuard, AdminGuard)
+  @Patch(':id/role')
+  updateRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('role') role: 'ADMIN' | 'USER'
+  ) {
+    return this.usersService.updateRole(id, role);
+  }
+
+  @UseGuards(AuthGuard, AdminGuard)
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.remove(id);
   }
 }

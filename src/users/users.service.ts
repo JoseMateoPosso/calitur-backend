@@ -4,30 +4,57 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  // Inyectamos Prisma para acceder a la base de datos
   constructor(private prisma: PrismaService) { }
 
-  // Método para crear un nuevo usuario
   async createUser(data: Prisma.UserCreateInput) {
     const newUser = await this.prisma.user.create({
       data: data,
     });
-    // Separamos el passwordHash del resto de los datos (que guardamos en 'result')
     const { passwordHash, ...result } = newUser;
-
-    // Solo devolvemos los datos seguros al frontend
     return result;
   }
 
-  // Método para obtener todos los usuarios registrados
-  async findAllUsers() {
-    return this.prisma.user.findMany();
-  }
-
-  // Método para obtener un usuario por su correo electrónico
   async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+    });
+  }
+
+  async findAllUsers(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count()
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        currentPage: page,
+        lastPage: Math.ceil(total / limit),
+        limit,
+      }
+    };
+  }
+
+  async updateRole(id: number, role: 'ADMIN' | 'USER') {
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
+      select: { id: true, name: true, role: true }
+    });
+  }
+
+  async remove(id: number) {
+    return this.prisma.user.delete({
+      where: { id }
     });
   }
 }
