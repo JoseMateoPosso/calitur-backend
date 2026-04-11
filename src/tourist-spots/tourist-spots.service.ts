@@ -2,15 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { StorageService } from '../storage/storage.service';
+import { CreateTouristSpotDto } from './dto/create-tourist-spot.dto';
+import { UpdateTouristSpotDto } from './dto/update-tourist-spot.dto';
 
 @Injectable()
 export class TouristSpotsService {
     constructor(private prisma: PrismaService, private storageService: StorageService) { }
 
     // Método para crear un sitio
-    async createSpot(data: Prisma.TouristSpotCreateInput) {
+    async createSpot(data: CreateTouristSpotDto) {
+        // 1. Separamos categoryId del resto de la información (name, description, etc.)
+        const { categoryId, ...spotData } = data;
+
+        // 2. Creamos el sitio en Prisma indicando la relación
         return this.prisma.touristSpot.create({
-            data,
+            data: {
+                ...spotData,
+                // Si el usuario envió una categoría, la conectamos en la base de datos
+                categories: categoryId ? {
+                    connect: { id: categoryId }
+                } : undefined,
+            },
         });
     }
 
@@ -88,7 +100,6 @@ export class TouristSpotsService {
     }
 
     // Método para obtener un sitio por su ID
-    // Método para obtener un sitio por su ID
     async findOneSpot(id: number, userId?: number) { // 👈 Agregamos userId opcional
         const spot = await this.prisma.touristSpot.findUnique({
             where: { id },
@@ -114,13 +125,19 @@ export class TouristSpotsService {
     }
 
     // Método para actualizar un sitio por su ID
-    async updateSpot(id: number, data: Prisma.TouristSpotUpdateInput) {
-        // Reutilizamos findOneSpot para comprobar que exista (y lanzar el 404 si no)
+    async updateSpot(id: number, data: UpdateTouristSpotDto) {
         await this.findOneSpot(id);
+
+        const { categoryId, ...spotData } = data;
 
         return this.prisma.touristSpot.update({
             where: { id },
-            data,
+            data: {
+                ...spotData,
+                categories: categoryId ? {
+                    set: [{ id: categoryId }]
+                } : undefined,
+            },
         });
     }
 

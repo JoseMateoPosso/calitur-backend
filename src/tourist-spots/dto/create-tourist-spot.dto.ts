@@ -26,4 +26,8 @@ export class CreateTouristSpotDto {
   @IsString({ message: 'El horario debe ser un texto válido' })
   @IsOptional()
   schedule?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'El ID de la categoría debe ser un número' })
+  categoryId?: number;
 }
