@@ -6,16 +6,12 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export class ReviewsService {
     constructor(private prisma: PrismaService) { }
 
-    // Método para crear una reseña uniendo el ID del usuario seguro
+    // Crear reseña
     async createReview(userId: number, data: CreateReviewDto) {
-        // Verificamos que el sitio turístico exista
         const spotExists = await this.prisma.touristSpot.findUnique({
-            where: {
-                id: data.spotId,
-            },
+            where: { id: data.spotId },
         });
 
-        
         if (!spotExists) {
             throw new NotFoundException('El sitio turístico al que intentas hacer la reseña no existe');
         }
@@ -36,21 +32,57 @@ export class ReviewsService {
                 text: data.text,
                 rating: data.rating,
                 spotId: data.spotId,
-                userId: userId, // Este ID viene del token, ¡es 100% real!
+                userId: userId,
             },
         });
     }
 
-    // Método para obtener todas las reseñas de un sitio en específico
+    // Obtener reseñas de un sitio (Público)
     async getReviewsBySpot(spotId: number) {
         return this.prisma.review.findMany({
             where: { spotId },
             include: {
-                // Prisma: Traemos el nombre del autor de la reseña
-                user: {
-                    select: { name: true }, // Solo el nombre, por privacidad no enviamos el email ni el password
-                },
+                user: { select: { name: true } },
             },
+        });
+    }
+
+    // Listar TODAS las reseñas con paginación (Para Admin)
+    async findAll(page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        const [data, total] = await Promise.all([
+            this.prisma.review.findMany({
+                skip,
+                take: limit,
+                include: {
+                    user: { select: { name: true, email: true } },
+                    spot: { select: { name: true } } // Traemos el nombre del sitio
+                },
+                orderBy: { createdAt: 'desc' }
+            }),
+            this.prisma.review.count()
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                currentPage: page,
+                lastPage: Math.ceil(total / limit),
+                limit,
+            }
+        };
+    }
+
+    // Eliminar reseña (Moderación)
+    async remove(id: number) {
+        // Verificamos si existe primero
+        const reviewExists = await this.prisma.review.findUnique({ where: { id } });
+        if (!reviewExists) throw new NotFoundException('La reseña no existe');
+
+        return this.prisma.review.delete({
+            where: { id }
         });
     }
 }

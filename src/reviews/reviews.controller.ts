@@ -1,26 +1,41 @@
-import { Controller, Post, Body, Get, Param, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, ParseIntPipe, UseGuards, Request, Delete, Query, DefaultValuePipe } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { AdminGuard } from '../auth/admin.guard'; // 👈 Importamos AdminGuard
 
 @Controller('reviews')
 export class ReviewsController {
     constructor(private readonly reviewsService: ReviewsService) { }
 
-    // PROTEGIDO: Solo los usuarios con token pueden dejar una opinión
+    // PROTEGIDO: Usuarios con token dejan opinión
     @UseGuards(AuthGuard)
     @Post()
     createReview(@Request() req, @Body() createReviewDto: CreateReviewDto) {
-        // Extraemos el ID del usuario del token de forma segura
         const userId = req.user.sub;
-
         return this.reviewsService.createReview(userId, createReviewDto);
     }
 
-    // PÚBLICO: Cualquiera puede ver las reseñas de un lugar
-    // Ruta: http://localhost:3000/reviews/spot/1
+    // PÚBLICO: Ver reseñas de un lugar
     @Get('spot/:spotId')
     getReviewsBySpot(@Param('spotId', ParseIntPipe) spotId: number) {
         return this.reviewsService.getReviewsBySpot(spotId);
+    }
+
+    // PROTEGIDO: Solo ADMINS ven todas las reseñas paginadas
+    @UseGuards(AuthGuard, AdminGuard)
+    @Get()
+    findAll(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    ) {
+        return this.reviewsService.findAll(page, limit);
+    }
+
+    // PROTEGIDO: Solo ADMINS pueden borrar (Moderar)
+    @UseGuards(AuthGuard, AdminGuard)
+    @Delete(':id')
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.reviewsService.remove(id);
     }
 }
