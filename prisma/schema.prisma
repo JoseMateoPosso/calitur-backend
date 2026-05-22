@@ -31,6 +31,10 @@ model User {
   createdAt    DateTime @default(now())
   role         Role     @default(USER)
 
+  // Restaurar contraseña
+  resetToken   String?
+  resetTokenExpires DateTime?
+
   // Relaciones
   reviews   Review[]
   favorites FavoriteSpot[]

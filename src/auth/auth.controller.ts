@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from './auth.guard'; // Importamos a nuestro guardia de autenticación
@@ -27,5 +27,22 @@ export class AuthController {
     async getProfile(@Request() request) {
         // Retornamos el payload que el Guardián incrustó en la petición
         return request.user;
+    }
+
+    // Solicitar enlace de recuperación
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    async forgotPassword(@Body('email') email: string) {
+        return this.authService.forgotPassword(email);
+    }
+
+    // Guardar la nueva contraseña usando el token
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(
+        @Body('token') token: string,
+        @Body('newPassword') newPassword: string,
+    ) {
+        return this.authService.resetPassword(token, newPassword);
     }
 }
