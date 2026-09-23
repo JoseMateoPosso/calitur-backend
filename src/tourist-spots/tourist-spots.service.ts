@@ -66,7 +66,7 @@ export class TouristSpotsService {
                         where: { userId: userId }
                     } : false,
                 },
-                orderBy: { id: 'asc' }, // Los ordenamos por ID para que no salten
+                orderBy: { id: 'desc' }, // Los ordenamos por ID para que no salten
             }),
             this.prisma.touristSpot.count({ where: where }),
         ]);
